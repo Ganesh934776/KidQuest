@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:kidquest/screens/parent/parent_login_screen.dart';
+
 import 'package:kidquest/screens/child/child_login_screen.dart';
+import 'package:kidquest/screens/parent/parent_dashboard_screen.dart';
+import 'package:kidquest/screens/parent/parent_login_screen.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key});
@@ -9,21 +12,18 @@ class RoleSelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
       appBar: AppBar(
         title: const Text("KidQuest"),
         centerTitle: true,
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
-
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-
               const Icon(
                 Icons.emoji_events,
                 size: 100,
@@ -62,12 +62,24 @@ class RoleSelectionScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 18),
                   ),
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ParentLoginScreen(),
-                      ),
-                    );
+                    // Already logged in? Open dashboard directly.
+                    if (FirebaseAuth.instance.currentUser != null) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const ParentDashboardScreen(),
+                        ),
+                      );
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const ParentLoginScreen(),
+                        ),
+                      );
+                    }
                   },
                 ),
               ),
@@ -87,7 +99,8 @@ class RoleSelectionScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const ChildLoginScreen(),
+                        builder: (_) =>
+                            const ChildLoginScreen(),
                       ),
                     );
                   },

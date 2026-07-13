@@ -1,59 +1,46 @@
 class LevelHelper {
-  /// Current Level
+  static const int xpPerLevel = 100;
+
+  /// Current level
   static int getLevel(int xp) {
-    if (xp < 100) return 1;
-    if (xp < 250) return 2;
-    if (xp < 450) return 3;
-    if (xp < 700) return 4;
-    if (xp < 1000) return 5;
-    return 6 + ((xp - 1000) ~/ 500);
+    return (xp ~/ xpPerLevel) + 1;
   }
 
-  /// XP needed for current level
-  static int currentLevelXP(int level) {
-    switch (level) {
-      case 1:
-        return 0;
-      case 2:
-        return 100;
-      case 3:
-        return 250;
-      case 4:
-        return 450;
-      case 5:
-        return 700;
-      case 6:
-        return 1000;
-      default:
-        return 1000 + ((level - 6) * 500);
-    }
+  /// XP earned in current level
+  static int getCurrentLevelXP(int xp) {
+    return xp % xpPerLevel;
   }
 
-  /// XP needed for next level
+  /// XP required for one level
+  static int getRequiredXP(int level) {
+    return xpPerLevel;
+  }
+
+  /// Total XP needed to reach next level
   static int nextLevelXP(int level) {
-    switch (level) {
-      case 1:
-        return 100;
-      case 2:
-        return 250;
-      case 3:
-        return 450;
-      case 4:
-        return 700;
-      case 5:
-        return 1000;
-      default:
-        return currentLevelXP(level + 1);
-    }
+    return level * xpPerLevel;
   }
 
   /// Progress (0.0 - 1.0)
+  static double getProgress(int xp) {
+    return (xp % xpPerLevel) / xpPerLevel;
+  }
+
+  /// Alias for compatibility
   static double progress(int xp) {
-    final level = getLevel(xp);
+    return getProgress(xp);
+  }
 
-    final current = currentLevelXP(level);
-    final next = nextLevelXP(level);
+  /// Remaining XP
+  static int getRemainingXP(int xp) {
+    return xpPerLevel - (xp % xpPerLevel);
+  }
 
-    return (xp - current) / (next - current);
+  static String getLevelName(int level) {
+    if (level <= 2) return "Beginner";
+    if (level <= 5) return "Explorer";
+    if (level <= 8) return "Champion";
+    if (level <= 12) return "Master";
+    return "Legend";
   }
 }

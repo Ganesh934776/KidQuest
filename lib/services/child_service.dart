@@ -6,13 +6,13 @@ import 'package:kidquest/models/child.dart';
 class ChildService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Generate a random 6-digit child code
+  /// Generate random 6-digit child code
   String generateChildCode() {
     final random = Random();
     return (100000 + random.nextInt(900000)).toString();
   }
 
-  /// Add child to Firestore
+  /// Add child
   Future<void> addChild({
     required String parentId,
     required String name,
@@ -41,27 +41,38 @@ class ChildService {
         .snapshots()
         .map(
           (snapshot) => snapshot.docs
-              .map((doc) => Child.fromMap(doc.id, doc.data()))
+              .map(
+                (doc) => Child.fromMap(
+                  doc.id,
+                  doc.data(),
+                ),
+              )
               .toList(),
         );
   }
 
-  /// Get a single child's live data
+  /// Get one child
   Stream<Child> getChild(String childId) {
     return _firestore
         .collection('children')
         .doc(childId)
         .snapshots()
         .map(
-          (doc) => Child.fromMap(doc.id, doc.data()!),
+          (doc) => Child.fromMap(
+            doc.id,
+            doc.data()!,
+          ),
         );
   }
 
-  /// Login using child code
+  /// Child login
   Future<Child?> login(String childCode) async {
     final snapshot = await _firestore
         .collection('children')
-        .where('childCode', isEqualTo: childCode)
+        .where(
+          'childCode',
+          isEqualTo: childCode,
+        )
         .limit(1)
         .get();
 
@@ -71,6 +82,74 @@ class ChildService {
 
     final doc = snapshot.docs.first;
 
-    return Child.fromMap(doc.id, doc.data());
+    return Child.fromMap(
+      doc.id,
+      doc.data(),
+    );
+  }
+
+  /// Leaderboard (all children sorted by XP)
+  Stream<List<Child>> getLeaderboard() {
+    return _firestore
+        .collection('children')
+        .orderBy('xp', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => Child.fromMap(
+                  doc.id,
+                  doc.data(),
+                ),
+              )
+              .toList(),
+        );
+  }
+
+  /// Update XP
+  Future<void> updateXP(
+    String childId,
+    int xp,
+  ) async {
+    await _firestore
+        .collection('children')
+        .doc(childId)
+        .update({
+      'xp': xp,
+    });
+  }
+
+  /// Update Coins
+  Future<void> updateCoins(
+    String childId,
+    int coins,
+  ) async {
+    await _firestore
+        .collection('children')
+        .doc(childId)
+        .update({
+      'coins': coins,
+    });
+  }
+
+  /// Update Streak
+  Future<void> updateStreak(
+    String childId,
+    int streak,
+  ) async {
+    await _firestore
+        .collection('children')
+        .doc(childId)
+        .update({
+      'streak': streak,
+    });
+  }
+
+  /// Delete child
+  Future<void> deleteChild(String childId) async {
+    await _firestore
+        .collection('children')
+        .doc(childId)
+        .delete();
   }
 }

@@ -1,17 +1,34 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primary = Color(0xFF4CAF50);
-  static const Color secondary = Color(0xFF2196F3);
-  static const Color accent = Color(0xFFFFC107);
+  AppColors._();
 
-  static const Color background = Color(0xFFF7FAFC);
+  // Primary Brand
+  static const Color primary = Color(0xFF6C63FF);
+  static const Color secondary = Color(0xFF00C9A7);
 
-  static const Color success = Colors.green;
+  // Background
+  static const Color background = Color(0xFFF8FAFC);
+  static const Color surface = Colors.white;
 
-  static const Color warning = Colors.orange;
+  // Rewards
+  static const Color xp = Color(0xFFFFC107);
+  static const Color coins = Color(0xFFFF9800);
 
-  static const Color danger = Colors.red;
+  // Status
+  static const Color success = Color(0xFF4CAF50);
+  static const Color warning = Color(0xFFFF9800);
+  static const Color danger = Color(0xFFF44336);
 
-  static const Color card = Colors.white;
+  // Text
+  static const Color textPrimary = Color(0xFF1F2937);
+  static const Color textSecondary = Color(0xFF6B7280);
+
+  // Misc
+  static const Color border = Color(0xFFE5E7EB);
+  static const Color cardShadow = Color(0x1A000000);
+
+  // Gamification
+  static const Color streak = Color(0xFFFF5722);
+  static const Color level = Color(0xFF7C4DFF);
 }

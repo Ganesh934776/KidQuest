@@ -1,30 +1,29 @@
 import 'package:flutter/material.dart';
 
+import 'app_colors.dart';
+import 'app_text_styles.dart';
+
 class AppTheme {
-  static const Color primary = Color(0xFF4F46E5);
-  static const Color secondary = Color(0xFF22C55E);
-  static const Color accent = Color(0xFFF59E0B);
-  static const Color background = Color(0xFFF8FAFC);
-  static const Color card = Colors.white;
+  AppTheme._();
 
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
-    scaffoldBackgroundColor: background,
+    scaffoldBackgroundColor: AppColors.background,
 
     colorScheme: ColorScheme.fromSeed(
-      seedColor: primary,
+      seedColor: AppColors.primary,
       brightness: Brightness.light,
     ),
 
     appBarTheme: const AppBarTheme(
-      backgroundColor: primary,
+      backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,
-      centerTitle: true,
       elevation: 0,
+      centerTitle: true,
     ),
 
     cardTheme: CardThemeData(
-      color: card,
+      color: AppColors.surface,
       elevation: 5,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
@@ -33,17 +32,21 @@ class AppTheme {
 
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        minimumSize: const Size.fromHeight(55),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        minimumSize: const Size(double.infinity, 54),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
         ),
       ),
     ),
 
-    inputDecorationTheme: InputDecorationTheme(
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
+    textTheme: const TextTheme(
+      headlineLarge: AppTextStyles.headline,
+      titleLarge: AppTextStyles.title,
+      titleMedium: AppTextStyles.subtitle,
+      bodyLarge: AppTextStyles.body,
+      bodyMedium: AppTextStyles.caption,
     ),
   );
 }

@@ -3,6 +3,7 @@ import 'package:kidquest/models/child.dart';
 import 'package:kidquest/screens/parent/analytics_screen.dart';
 import 'package:kidquest/utils/level_helper.dart';
 
+
 class ChildProfileScreen extends StatelessWidget {
   final Child child;
 

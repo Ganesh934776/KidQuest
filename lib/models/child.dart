@@ -57,10 +57,7 @@ class Child {
       age: map['age'] ?? 0,
       childCode: map['childCode'] ?? '',
       xp: map['xp'] ?? 0,
-
-      // Existing children without coins start at 0
       coins: map['coins'] ?? 0,
-
       streak: map['streak'] ?? 0,
       lastCompletedDate: map['lastCompletedDate'] != null
           ? (map['lastCompletedDate'] as Timestamp).toDate()

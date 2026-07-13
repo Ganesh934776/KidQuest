@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kidquest/utils/level_helper.dart';
 import 'package:kidquest/widgets/animated_progress_bar.dart';
 
+
 class LevelCard extends StatelessWidget {
   final int xp;
 
