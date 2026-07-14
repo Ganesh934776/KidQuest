@@ -20,8 +20,9 @@ import 'package:kidquest/services/session_service.dart';
 import 'package:kidquest/services/task_service.dart';
 
 import 'package:kidquest/widgets/cards/stat_card.dart';
-import 'package:kidquest/widgets/dashboard/parent_dashboard_header_card.dart';
+
 import 'package:kidquest/widgets/dashboard/quick_action_card.dart';
+import 'package:kidquest/widgets/dashboard/premium_parent_header.dart';
 
 class ParentDashboardScreen extends StatefulWidget {
   const ParentDashboardScreen({
@@ -250,10 +251,11 @@ Widget build(BuildContext context) {
             ),
             children: [
 
-              ParentDashboardHeaderCard(
-                parentName: data["name"],
-              ),
-
+             PremiumParentHeader(
+  parentName: data["name"],
+  children: data["children"],
+  totalXp: data["xp"],
+),
               const SizedBox(
                 height: 28,
               ),

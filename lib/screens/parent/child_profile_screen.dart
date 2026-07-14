@@ -3,7 +3,6 @@ import 'package:kidquest/models/child.dart';
 import 'package:kidquest/screens/parent/analytics_screen.dart';
 import 'package:kidquest/utils/level_helper.dart';
 
-
 class ChildProfileScreen extends StatelessWidget {
   final Child child;
 
@@ -93,9 +92,7 @@ class ChildProfileScreen extends StatelessWidget {
                     ListTile(
                       leading: const Icon(Icons.badge),
                       title: const Text("Child Code"),
-                      trailing: SelectableText(
-                        child.childCode,
-                      ),
+                      trailing: SelectableText(child.childCode),
                     ),
                   ],
                 ),
@@ -110,7 +107,7 @@ class ChildProfileScreen extends StatelessWidget {
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.analytics),
                 label: const Text(
-                  "View Analytics",
+                  "View Family Analytics",
                   style: TextStyle(
                     fontSize: 18,
                   ),
@@ -119,9 +116,7 @@ class ChildProfileScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => AnalyticsScreen(
-                        child: child,
-                      ),
+                      builder: (_) => const AnalyticsScreen(),
                     ),
                   );
                 },

@@ -61,17 +61,18 @@ class _SplashScreenState extends State<SplashScreen>
     final userType = await session.getUserType();
 
     // Parent Login
-    if (userType == "parent" &&
-        FirebaseAuth.instance.currentUser != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) =>
-              const ParentDashboardScreen(),
-        ),
-      );
-      return;
-    }
+    Future<void> _checkLogin() async {
+  await Future.delayed(const Duration(seconds: 2));
+
+  if (!mounted) return;
+
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const RoleSelectionScreen(),
+    ),
+  );
+}
 
     // Child Login
     if (userType == "child") {
