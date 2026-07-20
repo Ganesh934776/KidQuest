@@ -1,8 +1,9 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
+import 'package:kidquest/theme/app_gradients.dart';
+import 'package:kidquest/theme/app_shadows.dart';
+import 'package:kidquest/theme/app_spacing.dart';
 
-class PremiumParentHeader extends StatefulWidget {
+class PremiumParentHeader extends StatelessWidget {
   final String parentName;
   final int children;
   final int totalXp;
@@ -15,261 +16,319 @@ class PremiumParentHeader extends StatefulWidget {
   });
 
   @override
-  State<PremiumParentHeader> createState() =>
-      _PremiumParentHeaderState();
-}
-
-class _PremiumParentHeaderState
-    extends State<PremiumParentHeader>
-    with SingleTickerProviderStateMixin {
-  late AnimationController controller;
-
-  @override
-  void initState() {
-    super.initState();
-
-    controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 6),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (_, __) {
-        return Container(
-          height: 310,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xff6C63FF),
-                Color(0xff4FC3F7),
-              ],
+    return Container(
+      height: 320,
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: BorderRadius.circular(34),
+        boxShadow: AppShadows.card,
+      ),
+      child: Stack(
+        children: [
+
+          //-------------------------
+          // Background Circle
+          //-------------------------
+
+          Positioned(
+            top: -70,
+            right: -50,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .08),
+                shape: BoxShape.circle,
+              ),
             ),
-            boxShadow: [
-              BoxShadow(
-                blurRadius: 25,
-                color: Colors.blue.withValues(alpha: 0.25),
-                offset: const Offset(0, 10),
-              ),
-            ],
           ),
-          child: Stack(
-            children: [
 
-              _bubble(
-                35,
-                40,
-                70,
-                Colors.white.withValues(alpha: 0.12),
+          Positioned(
+            bottom: -60,
+            left: -40,
+            child: Container(
+              width: 170,
+              height: 170,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .07),
+                shape: BoxShape.circle,
               ),
+            ),
+          ),
 
-              _bubble(
-                280,
-                35,
-                45,
-                Colors.white.withValues(alpha: 0.10),
+          //-------------------------
+          // Notification
+          //-------------------------
+
+          Positioned(
+            top: 24,
+            right: 24,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .18),
+                borderRadius: BorderRadius.circular(18),
               ),
+              child: Stack(
+                children: [
 
-              _bubble(
-                260,
-                150,
-                90,
-                Colors.white.withValues(alpha: 0.08),
-              ),
-
-              _bubble(
-                40,
-                170,
-                55,
-                Colors.white.withValues(alpha: 0.08),
-              ),
-
-              Positioned(
-                left: 25,
-                top: 30,
-                child: Transform.translate(
-                  offset: Offset(
-                    sin(controller.value * pi * 2) * 8,
-                    0,
+                  const Icon(
+                    Icons.notifications_none_rounded,
+                    color: Colors.white,
+                    size: 28,
                   ),
-                  child: const Icon(
-                    Icons.star,
-                    color: Colors.amber,
-                    size: 24,
-                  ),
-                ),
-              ),
 
-              Positioned(
-                right: 35,
-                top: 70,
-                child: Transform.translate(
-                  offset: Offset(
-                    0,
-                    cos(controller.value * pi * 2) * 10,
-                  ),
-                  child: const Icon(
-                    Icons.favorite,
-                    color: Colors.pinkAccent,
-                    size: 20,
-                  ),
-                ),
-              ),
-
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment:
-                        MainAxisAlignment.center,
-                    children: [
-
-                      Transform.translate(
-                        offset: Offset(
-                          0,
-                          sin(controller.value * pi * 2) * 6,
-                        ),
-                        child: Container(
-                          width: 90,
-                          height: 90,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                blurRadius: 18,
-                                color: Colors.white
-                                    .withValues(alpha: 0.35),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.family_restroom,
-                            size: 52,
-                            color: Color(0xff6C63FF),
-                          ),
-                        ),
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
                       ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
 
-                      const SizedBox(height: 16),
+          //-------------------------
+          // Main Content
+          //-------------------------
 
-                      const Text(
-                        "Welcome Back 👋",
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 18,
-                        ),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                Row(
+                  children: [
+
+                    Container(
+                      width: 78,
+                      height: 78,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: .16),
+                        shape: BoxShape.circle,
                       ),
-
-                      const SizedBox(height: 6),
-
-                      Text(
-                        widget.parentName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 30,
-                        ),
+                      child: const Icon(
+                        Icons.family_restroom,
+                        color: Colors.white,
+                        size: 42,
                       ),
+                    ),
 
-                      const SizedBox(height: 20),
+                    const SizedBox(width: 18),
 
-                      Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.spaceEvenly,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
                         children: [
 
-                          _info(
-                            Icons.child_care,
-                            widget.children.toString(),
-                            "Children",
+                          const Text(
+                            "Good Morning 👋",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 18,
+                            ),
                           ),
 
-                          Container(
-                            height: 45,
-                            width: 1,
-                            color: Colors.white30,
+                          const SizedBox(height: 6),
+
+                          Text(
+                            parentName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 30,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
 
-                          _info(
-                            Icons.star,
-                            widget.totalXp.toString(),
-                            "XP",
+                          const SizedBox(height: 8),
+
+                          const Text(
+                            "Build better habits together.",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 15,
+                            ),
                           ),
                         ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 30),
+
+                Row(
+                  children: [
+
+                    Expanded(
+                      child: _InfoCard(
+                        icon: Icons.child_care,
+                        title: "Children",
+                        value: "$children",
+                      ),
+                    ),
+
+                    const SizedBox(width: 16),
+
+                    Expanded(
+                      child: _InfoCard(
+                        icon: Icons.auto_awesome,
+                        title: "Family XP",
+                        value: "$totalXp",
+                      ),
+                    ),
+                  ],
+                ),
+
+                const Spacer(),                //----------------------------
+                // Today's Mission Card
+                //----------------------------
+
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: .16),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: .20),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .20),
+                          borderRadius:
+                              BorderRadius.circular(18),
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome,
+                          color: Colors.amber,
+                          size: 32,
+                        ),
+                      ),
+
+                      const SizedBox(width: 18),
+
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+
+                            Text(
+                              "Today's Mission",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+
+                            SizedBox(height: 6),
+
+                            Text(
+                              "Generate today's routine and keep your children on track.",
+                              style: TextStyle(
+                                color: Colors.white70,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 6),
+              ],
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
+}class _InfoCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
 
-  Widget _info(
-    IconData icon,
-    String value,
-    String title,
-  ) {
-    return Column(
-      children: [
-        Icon(
-          icon,
-          color: Colors.white,
-        ),
-        const SizedBox(height: 6),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
-        ),
-        Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white70,
-          ),
-        ),
-      ],
-    );
-  }
+  const _InfoCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
 
-  Widget _bubble(
-    double left,
-    double top,
-    double size,
-    Color color,
-  ) {
-    return Positioned(
-      left: left,
-      top: top,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color,
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        vertical: 18,
+        horizontal: 16,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .14),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: .18),
         ),
+      ),
+      child: Column(
+        children: [
+
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: .18),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 28,
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -21,7 +21,7 @@ import 'package:kidquest/widgets/animations/level_up_dialog.dart';
 import 'package:kidquest/widgets/dashboard/child_dashboard_header_card.dart';
 import 'package:kidquest/widgets/dashboard/coins_card.dart';
 import 'package:kidquest/widgets/dashboard/dashboard_button.dart';
-import 'package:kidquest/widgets/dashboard/empty_task_card.dart';
+
 import 'package:kidquest/widgets/dashboard/level_progress_card.dart';
 import 'package:kidquest/widgets/dashboard/section_title.dart';
 import 'package:kidquest/widgets/dashboard/streak_card.dart';
@@ -292,7 +292,9 @@ tasks.sort(
                     const SizedBox(height: 16),
 
                     if (tasks.isEmpty)
-                      const EmptyTaskCard()
+                      const Center(
+  child: Text("No Tasks Available"),
+)
                     else
                       ...tasks.map(
                         (task) {

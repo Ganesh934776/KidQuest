@@ -1,9 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
-import 'package:kidquest/theme/app_colors.dart';
-import 'package:kidquest/theme/app_spacing.dart';
-import 'package:kidquest/theme/app_text_styles.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:kidquest/screens/common/role_selection_screen.dart';
 import 'package:kidquest/screens/parent/add_child_screen.dart';
@@ -19,15 +15,15 @@ import 'package:kidquest/services/parent_service.dart';
 import 'package:kidquest/services/session_service.dart';
 import 'package:kidquest/services/task_service.dart';
 
-import 'package:kidquest/widgets/cards/stat_card.dart';
-
+import 'package:kidquest/widgets/dashboard/parent_hero_section.dart';
+import 'package:kidquest/widgets/dashboard/dashboard_stats_row.dart';
+import 'package:kidquest/widgets/dashboard/child_overview_card.dart';
+import 'package:kidquest/widgets/dashboard/routine_banner.dart';
+import 'package:kidquest/widgets/dashboard/children_section.dart';
 import 'package:kidquest/widgets/dashboard/quick_action_card.dart';
-import 'package:kidquest/widgets/dashboard/premium_parent_header.dart';
 
 class ParentDashboardScreen extends StatefulWidget {
-  const ParentDashboardScreen({
-    super.key,
-  });
+  const ParentDashboardScreen({super.key});
 
   @override
   State<ParentDashboardScreen> createState() =>
@@ -36,20 +32,12 @@ class ParentDashboardScreen extends StatefulWidget {
 
 class _ParentDashboardScreenState
     extends State<ParentDashboardScreen> {
-  final DashboardService _dashboardService =
-      DashboardService();
+  final DashboardService _dashboardService = DashboardService();
+  final ParentService _parentService = ParentService();
+  final ChildService _childService = ChildService();
+  final TaskService _taskService = TaskService();
 
-  final ParentService _parentService =
-      ParentService();
-
-  final ChildService _childService =
-      ChildService();
-
-  final TaskService _taskService =
-      TaskService();
-
-  Future<Map<String, dynamic>>?
-      dashboardFuture;
+  Future<Map<String, dynamic>>? dashboardFuture;
 
   @override
   void initState() {
@@ -57,88 +45,62 @@ class _ParentDashboardScreenState
     dashboardFuture = _loadDashboard();
   }
 
-  Future<Map<String, dynamic>>
-      _loadDashboard() async {
-    final uid =
-        FirebaseAuth.instance.currentUser!.uid;
+  Future<Map<String, dynamic>> _loadDashboard() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
 
-    final parent =
-        await _parentService.getParent(uid);
-
-    final children =
-        await _dashboardService
-            .getChildrenCount(uid);
-
-    final xp =
-        await _dashboardService
-            .getTotalXP(uid);
-
-    final tasks =
-        await _dashboardService
-            .getTaskCount();
-
-    final rewards =
-        await _dashboardService
-            .getRewardCount();
+    final parent = await _parentService.getParent(uid);
+    final children = await _dashboardService.getChildrenCount(uid);
+    final totalXp = await _dashboardService.getTotalXP(uid);
+    final totalTasks = await _dashboardService.getTaskCount();
+    final rewards = await _dashboardService.getRewardCount();
 
     return {
-      "name":
-          parent?["name"] ?? "Parent",
-      "children": children,
-      "xp": xp,
-      "tasks": tasks,
-      "rewards": rewards,
+      'name': parent?['name'] ?? 'Parent',
+      'children': children,
+      'xp': totalXp,
+      'tasks': totalTasks,
+      'rewards': rewards,
     };
   }
 
   Future<void> refreshDashboard() async {
     setState(() {
-      dashboardFuture =
-          _loadDashboard();
+      dashboardFuture = _loadDashboard();
     });
 
     await dashboardFuture;
   }
 
   Future<void> generateRoutine() async {
-    final uid =
-        FirebaseAuth.instance.currentUser!.uid;
+    final uid = FirebaseAuth.instance.currentUser!.uid;
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => const Center(
-        child:
-            CircularProgressIndicator(),
+        child: CircularProgressIndicator(),
       ),
     );
 
     try {
       final children =
-          await _childService
-              .getChildren(uid)
-              .first;
+          await _childService.getChildren(uid).first;
 
       for (final child in children) {
-        await _taskService
-            .generateDailyTasks(
-          child.id,
-        );
+        await _taskService.generateDailyTasks(child.id);
       }
 
       if (!mounted) return;
 
       Navigator.pop(context);
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor:
-              Colors.green,
-          content: Text(
-            "Today's routine generated successfully 🎉",
-          ),
-        ),
+  backgroundColor: Colors.green,
+  content: Text(
+    "Today's routine generated successfully 🎉",
+  ),
+),
       );
 
       refreshDashboard();
@@ -147,450 +109,432 @@ class _ParentDashboardScreenState
 
       Navigator.pop(context);
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        SnackBar(
-          content: Text(
-            e.toString(),
-          ),
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
       );
     }
   }
 
   Future<void> _logout() async {
-    await FirebaseAuth.instance
-        .signOut();
-
-    await SessionService()
-        .clearSession();
+    await FirebaseAuth.instance.signOut();
+    await SessionService().clearSession();
 
     if (!mounted) return;
 
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            const RoleSelectionScreen(),
+        builder: (_) => const RoleSelectionScreen(),
       ),
-      (route) => false,
+      (_) => false,
     );
-  }@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: AppColors.background,
+  }  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xffF6F8FC),
 
-    appBar: AppBar(
-      elevation: 0,
-      centerTitle: true,
-      title: const Text(
-        "Parent Dashboard",
-      ),
-      actions: [
-        IconButton(
-          tooltip: "Analytics",
-          icon: const Icon(
-            Icons.analytics_outlined,
+      appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.transparent,
+        centerTitle: false,
+
+        title: const Text(
+          "Parent Dashboard",
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
           ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) =>
-                    const AnalyticsScreen(),
-              ),
-            );
-          },
         ),
-        IconButton(
-          tooltip: "Logout",
-          icon: const Icon(
-            Icons.logout,
-          ),
-          onPressed: _logout,
-        ),
-      ],
-    ),
 
-    body: FutureBuilder<Map<String, dynamic>>(
-      future: dashboardFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState ==
-            ConnectionState.waiting) {
-          return const Center(
-            child:
-                CircularProgressIndicator(),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              snapshot.error.toString(),
+        actions: [
+          IconButton(
+            tooltip: "Analytics",
+            icon: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.analytics_outlined,
+                color: Colors.indigo,
+              ),
             ),
-          );
-        }
-
-        if (!snapshot.hasData) {
-          return const Center(
-            child: Text(
-              "No dashboard data found.",
-            ),
-          );
-        }
-
-        final data = snapshot.data!;
-
-        return RefreshIndicator(
-          onRefresh: refreshDashboard,
-          child: ListView(
-            physics:
-                const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(
-              AppSpacing.lg,
-            ),
-            children: [
-
-             PremiumParentHeader(
-  parentName: data["name"],
-  children: data["children"],
-  totalXp: data["xp"],
-),
-              const SizedBox(
-                height: 28,
-              ),
-
-              Text(
-                "Family Overview",
-                style:
-                    AppTextStyles.title,
-              ),
-
-              const SizedBox(
-                height: 16,
-              ),
-
-              GridView.count(
-                shrinkWrap: true,
-                physics:
-                    const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                childAspectRatio: 1.15,
-                children: [
-
-                  StatCard(
-                    icon:
-                        Icons.child_care,
-                    title: "Children",
-                    value:
-                        "${data["children"]}",
-                    color:
-                        AppColors.primary,
-                  ),
-
-                  StatCard(
-                    icon: Icons.star,
-                    title: "Total XP",
-                    value:
-                        "${data["xp"]}",
-                    color:
-                        AppColors.xp,
-                  ),
-
-                  StatCard(
-                    icon:
-                        Icons.assignment,
-                    title: "Tasks",
-                    value:
-                        "${data["tasks"]}",
-                    color:
-                        Colors.green,
-                  ),
-
-                  StatCard(
-                    icon: Icons.card_giftcard,
-                    title: "Rewards",
-                    value:
-                        "${data["rewards"]}",
-                    color:
-                        Colors.deepPurple,
-                  ),
-                ],
-              ),
-
-              const SizedBox(
-                height: 30,
-              ),
-
-              Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.all(
-                  22,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AnalyticsScreen(),
                 ),
-                decoration: BoxDecoration(
-                  borderRadius:
-                      BorderRadius.circular(
-                    24,
+              );
+            },
+          ),
+
+          const SizedBox(width: 8),
+
+          IconButton(
+            tooltip: "Logout",
+            icon: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.logout,
+                color: Colors.red,
+              ),
+            ),
+            onPressed: _logout,
+          ),
+
+          const SizedBox(width: 16),
+        ],
+      ),
+
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: dashboardFuture,
+        builder: (context, snapshot) {
+
+          if (snapshot.connectionState ==
+              ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(snapshot.error.toString()),
+            );
+          }
+
+          if (!snapshot.hasData) {
+            return const Center(
+              child: Text("No dashboard data found"),
+            );
+          }
+
+          final data = snapshot.data!;
+
+          return RefreshIndicator(
+            onRefresh: refreshDashboard,
+
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                20,
+                10,
+                20,
+                120,
+              ),
+
+              children: [
+
+                ParentHeroSection(
+                  parentName: data["name"],
+                  children: data["children"],
+                  xp: data["xp"],
+                ),
+
+                const SizedBox(height: 24),
+
+                DashboardStatsRow(
+                  children: data["children"],
+                  tasks: data["tasks"],
+                  xp: data["xp"],
+                ),
+
+                const SizedBox(height: 24),
+
+                ChildOverviewCard(
+                  name: "Family Progress",
+                  level: 8,
+                  xp: data["xp"],
+                ),
+
+                const SizedBox(height: 24),
+
+                RoutineBanner(
+                  onGenerate: generateRoutine,
+                ),
+
+                const SizedBox(height: 28),
+
+                ChildrenSection(
+                  children: data["children"],
+                ),
+
+                const SizedBox(height: 30),                Container(
+                  padding: const EdgeInsets.all(22),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: .05),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                  gradient:
-                      const LinearGradient(
-                    colors: [
-                      Color(
-                          0xffFF7043),
-                      Color(
-                          0xffF4511E),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Today's Summary",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _summaryTile(
+                              Icons.assignment,
+                              "Tasks",
+                              "${data["tasks"]}",
+                              Colors.green,
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          Expanded(
+                            child: _summaryTile(
+                              Icons.star,
+                              "XP",
+                              "${data["xp"]}",
+                              Colors.orange,
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          Expanded(
+                            child: _summaryTile(
+                              Icons.card_giftcard,
+                              "Rewards",
+                              "${data["rewards"]}",
+                              Colors.purple,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                child: Column(
+
+                const SizedBox(height: 34),
+
+                Row(
                   children: [
-
-                    const Icon(
-                      Icons.auto_awesome,
-                      size: 58,
-                      color:
-                          Colors.white,
-                    ),
-
-                    const SizedBox(
-                      height: 14,
-                    ),
-
                     const Text(
-                      "Generate Today's Routine",
-                      textAlign:
-                          TextAlign.center,
-                      style:
-                          TextStyle(
-                        fontSize: 24,
-                        fontWeight:
-                            FontWeight.bold,
-                        color:
-                            Colors.white,
+                      "Quick Actions",
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 10,
-                    ),
+                    const Spacer(),
 
-                    const Text(
-                      "Generate daily tasks for every child with one tap.",
-                      textAlign:
-                          TextAlign.center,
-                      style:
-                          TextStyle(
-                        color:
-                            Colors.white70,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
                       ),
-                    ),
-
-                    const SizedBox(
-                      height: 22,
-                    ),
-
-                    SizedBox(
-                      width:
-                          double.infinity,
-                      height: 52,
-                      child:
-                          ElevatedButton.icon(
-                        style:
-                            ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Colors.white,
-                          foregroundColor:
-                              Colors.deepOrange,
+                      decoration: BoxDecoration(
+                        color: Colors.indigo.withValues(alpha: .08),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        "6 Actions",
+                        style: TextStyle(
+                          color: Colors.indigo,
+                          fontWeight: FontWeight.bold,
                         ),
-                        icon:
-                            const Icon(
-                          Icons.play_arrow,
-                        ),
-                        label:
-                            const Text(
-                          "Generate Routine",
-                        ),
-                        onPressed:
-                            generateRoutine,
                       ),
                     ),
                   ],
                 ),
-              ),
 
-              const SizedBox(
-                height: 30,
-              ),
+                const SizedBox(height: 22),
 
-              Text(
-                "Quick Actions",
-                style:
-                    AppTextStyles.title,
-              ),
-
-              const SizedBox(
-                height: 18,
-              ),
-
-              GridView.count(
-                shrinkWrap: true,
-                physics:
-                    const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.05,
-                children: [
-
-                  QuickActionCard(
-                    icon:
-                        Icons.person_add,
-                    title:
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 6,
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 18,
+                    mainAxisSpacing: 18,
+                    childAspectRatio: .95,
+                  ),
+                  itemBuilder: (context, index) {
+                    final actions = [
+                      (
+                        Icons.person_add_alt_1_rounded,
                         "Add Child",
-                    color:
                         Colors.blue,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const AddChildScreen(),
-                        ),
-                      ).then(
-                        (_) =>
-                            refreshDashboard(),
-                      );
-                    },
-                  ),
+                        () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AddChildScreen(),
+                            ),
+                          );
 
-                  QuickActionCard(
-                    icon:
-                        Icons.people,
-                    title:
+                          if (!mounted) return;
+
+                          refreshDashboard();
+                        },
+                      ),
+                      (
+                        Icons.groups_rounded,
                         "My Children",
-                    color:
                         Colors.green,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const MyChildrenScreen(),
-                        ),
-                      );
-                    },
-                  ),
-
-                  QuickActionCard(
-                    icon:
-                        Icons.assignment,
-                    title:
-                        "View Tasks",
-                    color:
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const MyChildrenScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      (
+                        Icons.assignment_rounded,
+                        "Tasks",
                         Colors.orange,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              ViewTasksScreen(),
-                        ),
-                      );
-                    },
-                  ),
-
-                  QuickActionCard(
-                    icon:
-                        Icons.card_giftcard,
-                    title:
-                        "Create Reward",
-                    color:
-                        Colors.red,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const CreateRewardScreen(),
-                        ),
-                      );
-                    },
-                  ),
-
-                  QuickActionCard(
-                    icon:
-                        Icons.redeem,
-                    title:
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ViewTasksScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      (
+                        Icons.card_giftcard_rounded,
                         "Rewards",
-                    color:
+                        Colors.red,
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const CreateRewardScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      (
+                        Icons.redeem_rounded,
+                        "Reward Store",
                         Colors.teal,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              ViewRewardsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-
-                  QuickActionCard(
-                    icon:
-                        Icons.analytics,
-                    title:
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ViewRewardsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      (
+                        Icons.analytics_rounded,
                         "Analytics",
-                    color:
-                        Colors.indigo,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const AnalyticsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
+                        Colors.deepPurple,
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const AnalyticsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ];
 
-              const SizedBox(
-                height: 40,
-              ),
-            ],
-          ),
-        );
-      },
-    ),floatingActionButton: FloatingActionButton.extended(
-  heroTag: "addChildFab",
-  backgroundColor: AppColors.primary,
-  foregroundColor: Colors.white,
-  elevation: 8,
-  icon: const Icon(Icons.person_add),
-  label: const Text(
-    "Add Child",
-    style: TextStyle(
-      fontWeight: FontWeight.bold,
-    ),
-  ),
-  onPressed: () async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) =>
-            const AddChildScreen(),
+                    final item = actions[index];
+
+                    return QuickActionCard(
+                      icon: item.$1,
+                      title: item.$2,
+                      color: item.$3,
+                      onTap: item.$4,
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 50),              ],
+            ),
+          );
+        },
       ),
     );
+  }
 
-    if (!mounted) return;
+  Widget _summaryTile(
+    IconData icon,
+    String title,
+    String value,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .05),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            color: color,
+            size: 32,
+          ),
 
-    refreshDashboard();
-  },
-),
-  );
-}
+          const SizedBox(height: 10),
+
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 4),
+
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black54,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -1,46 +1,131 @@
 import 'package:flutter/material.dart';
 
-class EmptyTaskCard extends StatelessWidget {
-  const EmptyTaskCard({super.key});
+class DashboardStatsRow extends StatelessWidget {
+  final int children;
+  final int xp;
+  final int tasks;
+  final int rewards;
+
+  const DashboardStatsRow({
+    super.key,
+    required this.children,
+    required this.xp,
+    required this.tasks,
+    required this.rewards,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 6,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
+    return Row(
+      children: [
+
+        Expanded(
+          child: _StatItem(
+            icon: Icons.child_care_rounded,
+            color: const Color(0xff6C63FF),
+            title: "Children",
+            value: children.toString(),
+          ),
+        ),
+
+        const SizedBox(width: 14),
+
+        Expanded(
+          child: _StatItem(
+            icon: Icons.auto_awesome,
+            color: Colors.amber,
+            title: "XP",
+            value: xp.toString(),
+          ),
+        ),
+
+        const SizedBox(width: 14),
+
+        Expanded(
+          child: _StatItem(
+            icon: Icons.assignment,
+            color: Colors.green,
+            title: "Tasks",
+            value: tasks.toString(),
+          ),
+        ),
+
+        const SizedBox(width: 14),
+
+        Expanded(
+          child: _StatItem(
+            icon: Icons.card_giftcard,
+            color: Colors.redAccent,
+            title: "Rewards",
+            value: rewards.toString(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final Color color;
+
+  const _StatItem({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 125,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .05),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 36,
-        ),
+        padding: const EdgeInsets.all(14),
         child: Column(
-          children: const [
-            Icon(
-              Icons.task_alt,
-              size: 70,
-              color: Colors.green,
-            ),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
 
-            SizedBox(height: 16),
-
-            Text(
-              "Awesome!",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: .12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                icon,
+                color: color,
               ),
             ),
 
-            SizedBox(height: 10),
+            const Spacer(),
 
             Text(
-              "No tasks assigned for today.\nEnjoy your free time!",
-              textAlign: TextAlign.center,
+              value,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
+
+            Text(
+              title,
               style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
+                color: Colors.grey.shade600,
               ),
             ),
           ],
