@@ -3,10 +3,10 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import 'package:kidquest/widgets/login/effects/floating_cloud.dart';
-import 'package:kidquest/widgets/login/effects/floating_coin.dart';
-import 'package:kidquest/widgets/login/effects/floating_star.dart';
-import 'package:kidquest/widgets/login/effects/floating_trophy.dart';
+import 'package:kidquest/widgets/login/efects/floating_cloud.dart';
+import 'package:kidquest/widgets/login/efects/floating_coin.dart';
+import 'package:kidquest/widgets/login/efects/floating_star.dart';
+import 'package:kidquest/widgets/login/efects/floating_trophy.dart';
 
 class AnimatedBackground extends StatefulWidget {
   final Widget child;

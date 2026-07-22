@@ -144,6 +144,40 @@ class ChildService {
       'streak': streak,
     });
   }
+  /// Update multiple child fields together
+Future<void> updateChildStats({
+  required String childId,
+  int? xp,
+  int? coins,
+  int? streak,
+  DateTime? lastCompletedDate,
+}) async {
+  final Map<String, dynamic> updates = {};
+
+  if (xp != null) {
+    updates['xp'] = xp;
+  }
+
+  if (coins != null) {
+    updates['coins'] = coins;
+  }
+
+  if (streak != null) {
+    updates['streak'] = streak;
+  }
+
+  if (lastCompletedDate != null) {
+    updates['lastCompletedDate'] =
+        Timestamp.fromDate(lastCompletedDate);
+  }
+
+  if (updates.isEmpty) return;
+
+  await _firestore
+      .collection('children')
+      .doc(childId)
+      .update(updates);
+}
 
   /// Delete child
   Future<void> deleteChild(String childId) async {

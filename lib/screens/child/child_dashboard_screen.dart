@@ -18,15 +18,27 @@ import 'package:kidquest/utils/level_helper.dart';
 
 import 'package:kidquest/widgets/animations/level_up_dialog.dart';
 
-import 'package:kidquest/widgets/dashboard/child_dashboard_header_card.dart';
-import 'package:kidquest/widgets/dashboard/coins_card.dart';
+import 'package:kidquest/widgets/dashboard/adventure_greeting_card.dart';
+
 import 'package:kidquest/widgets/dashboard/dashboard_button.dart';
 
 import 'package:kidquest/widgets/dashboard/level_progress_card.dart';
 import 'package:kidquest/widgets/dashboard/section_title.dart';
-import 'package:kidquest/widgets/dashboard/streak_card.dart';
+
+import 'package:kidquest/widgets/dashboard/premium_stats_card.dart';
 
 import 'package:kidquest/widgets/task_card.dart';
+import 'package:kidquest/widgets/dashboard/daily_progress_card.dart';
+import 'package:kidquest/widgets/nibble/nibble_card.dart';
+import 'package:kidquest/widgets/world/forest_progress_card.dart';
+import 'package:kidquest/widgets/rewards/treasure_chest_card.dart';
+import 'package:kidquest/widgets/rewards/treasure_reward_dialog.dart';
+import 'package:kidquest/widgets/dashboard/premium_header.dart';
+import 'package:kidquest/screens/child/my_world_screen.dart';
+import 'package:kidquest/screens/child/pet_screen.dart';
+import 'package:kidquest/services/adventure_service.dart';
+import 'package:kidquest/widgets/dashboard/adventure_card.dart';
+import 'package:kidquest/widgets/rewards/daily_login_calendar.dart';
 
 class ChildDashboardScreen extends StatefulWidget {
   final String childId;
@@ -104,6 +116,7 @@ void initState() {
       child: CircularProgressIndicator(),
     );
   }
+  
 
   if (!childSnapshot.hasData) {
     return const Center(
@@ -140,6 +153,7 @@ void initState() {
       ),
     );
   }
+  
 
   if (taskSnapshot.connectionState ==
       ConnectionState.waiting) {
@@ -154,13 +168,21 @@ void initState() {
     );
   }
 
-              final tasks = [...taskSnapshot.data!];
+             final tasks = [...taskSnapshot.data!];
+             final adventure = AdventureService.getTodayAdventure();
 
 tasks.sort(
   (a, b) => a.submissionTime.compareTo(b.submissionTime),
 );
 
-              return SingleChildScrollView(
+final completedTasks =
+    tasks.where((e) => e.isCompleted).length;
+
+final unlocked =
+    tasks.isNotEmpty &&
+    completedTasks == tasks.length;
+
+return SingleChildScrollView(
                 padding:
                     const EdgeInsets.all(16),
                 child: Column(
@@ -168,46 +190,116 @@ tasks.sort(
                       CrossAxisAlignment
                           .stretch,
                   children: [
-                    ChildDashboardHeaderCard(
-                      childName: child.name,
-                      level: level,
-                      coins: child.coins,
-                      streak: child.streak,
-                    ),
+                    AdventureGreetingCard(
+  childName: child.name,
+  level: level,
+  streak: child.streak,
+  coins: child.coins,
+),
+DailyLoginCalendar(
+  childId: widget.childId,
+),
 
-                    const SizedBox(height: 20),
+const SizedBox(height: 12),
+const SizedBox(height: 12),
 
-                    LevelProgressCard(
-                      level: level,
-                      progress: progress,
-                      currentXP: currentXP,
-                      requiredXP:
-                          requiredXP,
-                      remainingXP:
-                          LevelHelper
-                              .getRemainingXP(
-                        child.xp,
-                      ),
-                      levelName:
-                          LevelHelper
-                              .getLevelName(
-                        level,
-                      ),
-                    ),
+DailyProgressCard(
+  completed:
+      tasks.where((e) => e.isCompleted).length,
+  total: tasks.length,
+),
 
-                    const SizedBox(height: 18),
 
-                    StreakCard(
-                      streak: child.streak,
-                    ),
+const SizedBox(height: 12),
 
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 12),
 
-                    CoinsCard(
-                      coins: child.coins,
-                    ),
+                   PremiumStatsCard(
+  level: level,
+  streak: child.streak,
+  coins: child.coins,
+),
+DashboardButton(
+  title: "Dragon",
+  icon: Icons.pets,
+  color: Colors.deepOrange,
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PetScreen(
+          xp: child.xp,
+        ),
+      ),
+    );
+  },
+),
 
-                    const SizedBox(height: 22),
+const SizedBox(height: 12),
+
+LevelProgressCard(
+  level: level,
+  progress: progress,
+  currentXP: currentXP,
+  requiredXP: requiredXP,
+  remainingXP: LevelHelper.getRemainingXP(
+    child.xp,
+  ),
+  levelName: LevelHelper.getLevelName(
+    level,
+  ),
+),
+PremiumHeader(
+  childName: child.name,
+  level: level,
+  coins: child.coins,
+  streak: child.streak,
+  currentXP: currentXP,
+  requiredXP: requiredXP,
+  progress: progress,
+),
+DashboardButton(
+  title: "My World",
+  icon: Icons.public,
+  color: Colors.teal,
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MyWorldScreen(),
+      ),
+    );
+  },
+),
+NibbleCard(
+  level: level,
+  happiness: 85,
+  energy: 70,
+  message: "Let's finish today's adventures!",
+),
+ForestProgressCard(
+    completed:
+        tasks.where((e)=>e.isCompleted).length,
+    total: tasks.length,
+),
+TreasureChestCard(
+  unlocked: unlocked,
+  onOpen: () {
+
+   showDialog(
+  context: context,
+  builder: (_) => const TreasureRewardDialog(),
+);
+
+  },
+),
+
+const SizedBox(height: 12),
+
+const SizedBox(height:12),
+
+const SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
                     Row(
                       children: [
@@ -283,7 +375,13 @@ tasks.sort(
                       ],
                     ),
 
-                    const SizedBox(height: 26),
+                    const SizedBox(height: 12),
+                    AdventureCard(
+  adventure: adventure,
+),
+
+const SizedBox(height: 12),
+
                                         const SectionTitle(
                       title: "Today's Tasks",
                       icon: Icons.check_circle,

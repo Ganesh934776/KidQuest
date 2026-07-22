@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:kidquest/services/analytics_service.dart';
 
+
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
 

@@ -1,35 +1,33 @@
 import 'package:flutter/material.dart';
- 
+
 class AppColors {
   AppColors._();
- 
-  // Primary Brand
+
+  // Brand Colors
   static const Color primary = Color(0xFF6C63FF);
-  static const Color secondary = Color(0xFF00C9A7);
- 
+  static const Color secondary = Color(0xFF7ED957);
+
+  static const Color gold = Color(0xFFFFC857);
+  static const Color danger = Color(0xFFFF6B6B);
+
   // Background
-  static const Color background = Color(0xFFF8FAFC);
-  static const Color surface = Colors.white;
- 
-  // Rewards
-  static const Color xp = Color(0xFFFFC107);
-  static const Color coins = Color(0xFFFF9800);
- 
-  // Status
-  static const Color success = Color(0xFF4CAF50);
-  static const Color warning = Color(0xFFFF9800);
-  static const Color danger = Color(0xFFF44336);
- 
-  // Text
-  static const Color textPrimary = Color(0xFF1F2937);
-  static const Color textSecondary = Color(0xFF6B7280);
- 
-  // Misc
-  static const Color border = Color(0xFFE5E7EB);
+  static const Color background = Color(0xFFF6F8FF);
+  static const Color card = Colors.white;
+
+  // Shadow
   static const Color cardShadow = Color(0x1A000000);
- 
-  // Gamification
-  static const Color streak = Color(0xFFFF5722);
-  static const Color level = Color(0xFF7C4DFF);
+
+  // Text
+  static const Color textDark = Color(0xFF1D1D1D);
+  static const Color textLight = Color(0xFF757575);
+
+  // Gradient
+  static const LinearGradient primaryGradient = LinearGradient(
+    colors: [
+      Color(0xFF6C63FF),
+      Color(0xFF8E7BFF),
+    ],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 }
- 

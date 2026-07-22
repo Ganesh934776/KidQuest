@@ -1,71 +1,112 @@
+import 'dart:math';
 import 'dart:ui';
-
-import 'package:flutter/material.dart';
+ 
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+ 
 import 'package:kidquest/screens/child/child_login_screen.dart';
 import 'package:kidquest/screens/parent/parent_dashboard_screen.dart';
 import 'package:kidquest/screens/parent/parent_login_screen.dart';
-
+ 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
-
+ 
   @override
   State<RoleSelectionScreen> createState() =>
       _RoleSelectionScreenState();
 }
-
+ 
 class _RoleSelectionScreenState
     extends State<RoleSelectionScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _fade;
-  late final Animation<double> _scale;
-  late final Animation<Offset> _slide;
-
+    with TickerProviderStateMixin {
+      late AnimationController _pageController;
+  late AnimationController _backgroundController;
+  late AnimationController _floatingController;
+  late AnimationController _logoController;
+ 
+  late Animation<double> fadeAnimation;
+  late Animation<double> scaleAnimation;
+  late Animation<Offset> slideAnimation;
+  late Animation<double> logoScale;
+  late Animation<double> backgroundAnimation;
+   
   @override
   void initState() {
     super.initState();
-
-    _controller = AnimationController(
+ 
+    _pageController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1800),
     );
-
-    _fade = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
+ 
+    _backgroundController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
+    )..repeat();
+ 
+    _floatingController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat(reverse: true);
+ 
+    _logoController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+ 
+    fadeAnimation = CurvedAnimation(
+      parent: _pageController,
+      curve: Curves.easeIn,
     );
-
-    _scale = Tween<double>(
-      begin: .92,
+ 
+    scaleAnimation = Tween<double>(
+      begin: .75,
       end: 1,
     ).animate(
       CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOutBack,
+        parent: _pageController,
+        curve: Curves.elasticOut,
       ),
     );
-
-    _slide = Tween<Offset>(
-      begin: const Offset(0, .15),
+ 
+    slideAnimation = Tween<Offset>(
+      begin: const Offset(0, .20),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOutCubic,
+        parent: _pageController,
+        curve: Curves.easeOutBack,
       ),
     );
-
-    _controller.forward();
+ 
+    logoScale = Tween<double>(
+      begin: .92,
+      end: 1.08,
+    ).animate(
+      CurvedAnimation(
+        parent: _logoController,
+        curve: Curves.easeInOut,
+      ),
+    );
+ 
+    backgroundAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(_backgroundController);
+ 
+    _pageController.forward();
   }
-
+ 
   @override
   void dispose() {
-    _controller.dispose();
+    _pageController.dispose();
+    _backgroundController.dispose();
+    _floatingController.dispose();
+    _logoController.dispose();
     super.dispose();
   }
-
+ 
   void _openParent() {
     if (FirebaseAuth.instance.currentUser != null) {
       Navigator.pushReplacement(
@@ -83,7 +124,7 @@ class _RoleSelectionScreenState
       );
     }
   }
-
+ 
   void _openChild() {
     Navigator.push(
       context,
@@ -92,223 +133,783 @@ class _RoleSelectionScreenState
       ),
     );
   }
-
-  @override
+    @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+ 
     return Scaffold(
       body: Stack(
-        fit: StackFit.expand,
         children: [
-          Image.asset(
-            "assets/images/welcome_hero.png",
-            fit: BoxFit.cover,
+ 
+          // Animated Gradient Background
+          AnimatedBuilder(
+            animation: backgroundAnimation,
+            builder: (_, __) {
+              return Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color.lerp(
+                        const Color(0xff5B5FEF),
+                        const Color(0xff00C6FF),
+                        backgroundAnimation.value,
+                      )!,
+                      Color.lerp(
+                        const Color(0xff7B61FF),
+                        const Color(0xff7F7FD5),
+                        backgroundAnimation.value,
+                      )!,
+                      Color.lerp(
+                        const Color(0xff1CB5E0),
+                        const Color(0xffC33764),
+                        backgroundAnimation.value,
+                      )!,
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
-
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0x22000000),
-                  Color(0x66000000),
-                  Color(0xDD000000),
-                ],
+ 
+          // Floating Bubbles
+          ...List.generate(
+            18,
+            (index) => AnimatedBuilder(
+              animation: _floatingController,
+              builder: (_, __) {
+                return Positioned(
+                  left: (index * 25.0) % size.width,
+                  top: (index * 90.0) -
+                      (_floatingController.value * 80),
+                  child: Opacity(
+                    opacity: .12,
+                    child: Container(
+                      width: 20 + (index % 5) * 10,
+                      height: 20 + (index % 5) * 10,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+ 
+          // Floating Stars
+          ...List.generate(
+            25,
+            (index) => Positioned(
+              left: Random().nextDouble() * size.width,
+              top: Random().nextDouble() * size.height,
+              child: AnimatedBuilder(
+                animation: _floatingController,
+                builder: (_, __) {
+                  return Opacity(
+                    opacity: .4 + (_floatingController.value * .6),
+                    child: Icon(
+                      Icons.star,
+                      color: Colors.amber,
+                      size: 8 + (index % 4) * 4,
+                    ),
+                  );
+                },
               ),
             ),
           ),
-
+ 
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(22),
                 child: FadeTransition(
-                  opacity: _fade,
+                  opacity: fadeAnimation,
                   child: SlideTransition(
-                    position: _slide,
+                    position: slideAnimation,
                     child: ScaleTransition(
-                      scale: _scale,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxWidth: 470,
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(34),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(
-                              sigmaX: 18,
-                              sigmaY: 18,
+                      scale: scaleAnimation,
+                      child: ClipRRect(
+                        borderRadius:
+                            BorderRadius.circular(34),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(
+                            sigmaX: 24,
+                            sigmaY: 24,
+                          ),
+                          child: Container(
+                            width: 500,
+                            padding:
+                                const EdgeInsets.all(30),
+                            decoration: BoxDecoration(
+                              color:
+                                  Colors.white.withOpacity(.12),
+                              borderRadius:
+                                  BorderRadius.circular(34),
+                              border: Border.all(
+                                color: Colors.white24,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 35,
+                                  offset: const Offset(0, 20),
+                                ),
+                              ],
                             ),
-                            child: Container(
-                              padding: const EdgeInsets.all(30),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(
-                                  alpha: .14,
-                                ),
-                                borderRadius:
-                                    BorderRadius.circular(34),
-                                border: Border.all(
-                                  color: Colors.white.withValues(
-                                    alpha: .18,
+                            child: Column(
+                              children: [AnimatedBuilder(
+  animation: logoScale,
+  builder: (_, __) {
+    return Transform.scale(
+      scale: logoScale.value,
+      child: Container(
+        width: 130,
+        height: 130,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withOpacity(0.4),
+            width: 3,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipOval(
+  child: Image.asset(
+    "assets/images/welcome_logo.png",
+    fit: BoxFit.cover,
+  ),
+),
+ 
+      ),
+    );
+  },
+),
+ 
+const SizedBox(height: 30),
+ 
+                                const SizedBox(height: 25),
+ 
+                               Text(
+  "WELCOME TO",
+  style: GoogleFonts.poppins(
+    color: Colors.white,
+    letterSpacing: 8,
+    fontSize: 18,
+    fontWeight: FontWeight.w500,
+  ),
+),
+ 
+                                const SizedBox(height: 10),
+ 
+                               ShaderMask(
+  shaderCallback: (bounds) => const LinearGradient(
+    colors: [
+      Color(0xffFFD54F),
+      Color(0xff7ED957),
+      Color(0xffFF69B4),
+      Color(0xff7B61FF),
+      Color(0xff42A5F5),
+      Color(0xff26C6DA),
+    ],
+  ).createShader(bounds),
+  child: Text(
+    "KidQuest",
+    style: GoogleFonts.fredoka(
+      fontSize: 58,
+      fontWeight: FontWeight.bold,
+      color: Colors.white,
+    ),
+  ),
+),
+ 
+                                const SizedBox(height: 16),
+ 
+                                Text(
+                                  "Learn • Play • Grow Together",
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white70,
+                                    fontSize: 17,
+                                    height: 1.6,
                                   ),
                                 ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    width: 90,
-                                    height: 90,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.white.withValues(
-                                        alpha: .12,
+ 
+                                const SizedBox(height: 35),
+ 
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _PremiumStatCard(
+                                        icon: Icons.family_restroom,
+                                        value: "5K+",
+                                        title: "Families",
+                                        color:
+                                            const Color(0xff8E2DE2),
                                       ),
                                     ),
-                                    child: const Icon(
-                                      Icons.auto_awesome,
-                                      color: Colors.amber,
-                                      size: 42,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 24),
-
-                                  const Text(
-                                    "Welcome to",
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 20,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 6),
-
-                                  const Text(
-                                    "KidQuest",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 42,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 14),
-
-                                  const Text(
-                                    "Build habits, earn rewards and create unforgettable moments together.",
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 16,
-                                      height: 1.6,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 28),
-
-                                  const Wrap(
-                                    spacing: 12,
-                                    runSpacing: 12,
-                                    children: [
-                                      _FeatureTile(
+ 
+                                    const SizedBox(width: 14),
+ 
+                                    Expanded(
+                                      child: _PremiumStatCard(
                                         icon: Icons.task_alt,
-                                        title: "Daily Missions",
+                                        value: "12K+",
+                                        title: "Tasks",
+                                        color:
+                                            const Color(0xff00C6FF),
                                       ),
-                                      _FeatureTile(
-                                        icon: Icons.stars,
-                                        title: "Earn XP",
-                                      ),
-                                      _FeatureTile(
-                                        icon: Icons.card_giftcard,
-                                        title: "Rewards",
-                                      ),
-                                      _FeatureTile(
+                                    ),
+ 
+                                    const SizedBox(width: 14),
+ 
+                                    Expanded(
+                                      child: _PremiumStatCard(
                                         icon: Icons.emoji_events,
-                                        title: "Leaderboard",
+                                        value: "98%",
+                                        title: "Success",
+                                        color:
+                                            const Color(0xffFFB300),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+ 
+                                const SizedBox(height: 30),
+ 
+                                Container(
+                                  width: double.infinity,
+                                  padding:
+                                      const EdgeInsets.all(22),
+                                  decoration: BoxDecoration(
+                                    borderRadius:
+                                        BorderRadius.circular(28),
+                                    gradient:
+                                        const LinearGradient(
+                                      colors: [
+                                        Color(0xff7B61FF),
+                                        Color(0xff5B5FEF),
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.deepPurple
+                                            .withOpacity(.35),
+                                        blurRadius: 28,
+                                        offset:
+                                            const Offset(0, 14),
                                       ),
                                     ],
                                   ),
-
-                                  const SizedBox(height: 34),                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 62,
-                                    child: _RoleButton(
-                                      icon: Icons.family_restroom_rounded,
-                                      title: "Continue as Parent",
-                                      filled: true,
-                                      gradient: const LinearGradient(
-                                        colors: [
-                                          Color(0xFF5B5FEF),
-                                          Color(0xFF7B61FF),
-                                        ],
-                                      ),
-                                      onTap: _openParent,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 18),
-
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 62,
-                                    child: _RoleButton(
-                                      icon: Icons.child_care_rounded,
-                                      title: "Continue as Child",
-                                      filled: false,
-                                      onTap: _openChild,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 30),
-
-                                  Row(
+                                  child: Row(
                                     children: [
-                                      Expanded(
-                                        child: Divider(
-                                          color: Colors.white.withValues(
-                                            alpha: .25,
-                                          ),
+                                      Container(
+                                        width: 70,
+                                        height: 70,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white
+                                              .withOpacity(.15),
+                                          borderRadius:
+                                              BorderRadius.circular(
+                                                  20),
+                                        ),
+                                        child: const Icon(
+                                          Icons.rocket_launch,
+                                          color: Colors.white,
+                                          size: 38,
                                         ),
                                       ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 14,
-                                        ),
-                                        child: Text(
-                                          "KidQuest",
-                                          style: TextStyle(
-                                            color: Colors.white.withValues(
-                                              alpha: .70,
+ 
+                                      const SizedBox(width: 18),
+ 
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment
+                                                  .start,
+                                          children: [
+                                            Text(
+                                              "Today's Mission",
+                                              style: GoogleFonts
+                                                  .poppins(
+                                                color:
+                                                    Colors.white,
+                                                fontSize: 19,
+                                                fontWeight:
+                                                    FontWeight.bold,
+                                              ),
                                             ),
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 1,
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Divider(
-                                          color: Colors.white.withValues(
-                                            alpha: .25,
-                                          ),
+ 
+                                            const SizedBox(
+                                                height: 6),
+ 
+                                            Text(
+                                              "Complete 3 fun activities and earn 50 XP.",
+                                              style: GoogleFonts
+                                                  .poppins(
+                                                color: Colors
+                                                    .white70,
+                                                height: 1.5,
+                                              ),
+                                            ),
+ 
+                                            const SizedBox(
+                                                height: 12),
+ 
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius
+                                                      .circular(
+                                                          20),
+                                              child:
+                                                  const LinearProgressIndicator(
+                                                value: .65,
+                                                minHeight: 8,
+                                                backgroundColor:
+                                                    Colors
+                                                        .white24,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation(
+                                                  Colors.amber,
+                                                ),
+                                              ),
+                                            ),
+ 
+                                            const SizedBox(
+                                                height: 8),
+ 
+                                            Text(
+                                              "65% Completed",
+                                              style: GoogleFonts
+                                                  .poppins(
+                                                color: Colors
+                                                    .white70,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
-
-                                  const SizedBox(height: 18),
-
-                                  const Text(
-                                    "Every small habit builds a brighter future 🌟",
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 15,
-                                      height: 1.5,
+                                ),
+ 
+                                const SizedBox(height: 32),                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    "Why Kids Love KidQuest",
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+ 
+                                const SizedBox(height: 18),
+ 
+                                Wrap(
+                                  spacing: 14,
+                                  runSpacing: 14,
+                                  children: [
+                                    _PremiumFeatureCard(
+                                      icon: Icons.stars,
+                                      title: "Earn XP",
+                                      subtitle:
+                                          "Complete tasks & level up",
+                                    ),
+                                    _PremiumFeatureCard(
+                                      icon: Icons.card_giftcard,
+                                      title: "Rewards",
+                                      subtitle:
+                                          "Unlock amazing gifts",
+                                    ),
+                                    _PremiumFeatureCard(
+                                      icon: Icons.auto_graph,
+                                      title: "Progress",
+                                      subtitle:
+                                          "Track daily growth",
+                                    ),
+                                    _PremiumFeatureCard(
+                                      icon: Icons.groups,
+                                      title: "Family Fun",
+                                      subtitle:
+                                          "Parents & Kids together",
+                                    ),
+                                  ],
+                                ),
+ 
+                                const SizedBox(height: 36),
+ 
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    "Achievements",
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+ 
+                                const SizedBox(height: 18),
+ 
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: [
+                                      _AchievementCard(
+                                        icon: Icons.emoji_events,
+                                        title: "Gold Trophy",
+                                        subtitle: "100 Tasks",
+                                        color: const Color(0xffFFD54F),
+                                      ),
+ 
+                                      const SizedBox(width: 16),
+ 
+                                      _AchievementCard(
+                                        icon:
+                                            Icons.workspace_premium,
+                                        title: "Level 10",
+                                        subtitle: "XP Master",
+                                        color: const Color(0xff7B61FF),
+                                      ),
+ 
+                                      const SizedBox(width: 16),
+ 
+                                      _AchievementCard(
+                                        icon: Icons.military_tech,
+                                        title: "Champion",
+                                        subtitle: "Top Kid",
+                                        color: const Color(0xff00C6FF),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+ 
+                                const SizedBox(height: 34),
+ 
+ 
+ 
+   Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    "Popular Rewards",
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+ 
+                                const SizedBox(height: 18),
+ 
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                        padding:
+                                            const EdgeInsets.all(18),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white
+                                              .withOpacity(.10),
+                                          borderRadius:
+                                              BorderRadius.circular(
+                                                  22),
+                                          border: Border.all(
+                                            color: Colors.white24,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            const Icon(
+                                              Icons.toys,
+                                              size: 50,
+                                              color: Colors.orange,
+                                            ),
+ 
+                                            const SizedBox(
+                                                height: 12),
+ 
+                                            Text(
+                                              "Toy Car",
+                                              style: GoogleFonts
+                                                  .poppins(
+                                                color:
+                                                    Colors.white,
+                                                fontWeight:
+                                                    FontWeight.bold,
+                                              ),
+                                            ),
+ 
+                                            const SizedBox(
+                                                height: 6),
+ 
+                                            Text(
+                                              "500 XP",
+                                              style: GoogleFonts
+                                                  .poppins(
+                                                color: Colors
+                                                    .white70,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+ 
+                                    const SizedBox(width: 16),
+ 
+                                    Expanded(
+                                      child: Container(
+                                        padding:
+                                            const EdgeInsets.all(18),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white
+                                              .withOpacity(.10),
+                                          borderRadius:
+                                              BorderRadius.circular(
+                                                  22),
+                                          border: Border.all(
+                                            color: Colors.white24,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            const Icon(
+                                              Icons
+                                                  .sports_esports,
+                                              size: 50,
+                                              color:
+                                                  Colors.lightGreen,
+                                            ),
+ 
+                                            const SizedBox(
+                                                height: 12),
+ 
+                                            Text(
+                                              "Game Time",
+                                              style: GoogleFonts
+                                                  .poppins(
+                                                color:
+                                                    Colors.white,
+                                                fontWeight:
+                                                    FontWeight.bold,
+                                              ),
+                                            ),
+ 
+                                            const SizedBox(
+                                                height: 6),
+ 
+                                            Text(
+                                              "300 XP",
+                                              style: GoogleFonts
+                                                  .poppins(
+                                                color: Colors
+                                                    .white70,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+ 
+                                const SizedBox(height: 34),
+ 
+                                Container(
+                                  padding:
+                                      const EdgeInsets.all(22),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        Colors.white.withOpacity(.10),
+                                    borderRadius:
+                                        BorderRadius.circular(24),
+                                    border: Border.all(
+                                      color: Colors.white24,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.lightbulb,
+                                        color: Colors.amber,
+                                        size: 42,
+                                      ),
+ 
+                                      const SizedBox(width: 18),
+ 
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment
+                                                  .start,
+                                          children: [
+                                            Text(
+                                              "Parent Tip",
+                                              style: GoogleFonts
+                                                  .poppins(
+                                                color:
+                                                    Colors.white,
+                                                fontWeight:
+                                                    FontWeight.bold,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+ 
+                                            const SizedBox(
+                                                height: 6),
+ 
+                                            Text(
+                                              "Encourage children by giving rewards for every completed daily mission.",
+                                              style: GoogleFonts
+                                                  .poppins(
+                                                color: Colors
+                                                    .white70,
+                                                height: 1.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+ 
+                                const SizedBox(height: 40),                                SizedBox(
+                                  width: double.infinity,
+                                  height: 90,
+                                  child: _PremiumRoleButton(
+                                    icon: Icons.family_restroom_rounded,
+                                    title: "Parent Dashboard",
+                                    subtitle:
+                                        "Manage routines, rewards & children",
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xff6A5AE0),
+                                        Color(0xff8E2DE2),
+                                      ],
+                                    ),
+                                    onTap: _openParent,
+                                  ),
+                                ),
+ 
+                                const SizedBox(height: 18),
+ 
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 90,
+                                  child: _PremiumOutlineButton(
+                                    icon: Icons.rocket_launch_rounded,
+                                    title: "Child Adventure",
+                                    subtitle:
+                                        "Play • Learn • Earn Rewards",
+                                    onTap: _openChild,
+                                  ),
+                                ),
+ 
+                                const SizedBox(height: 35),
+ 
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(.08),
+                                    borderRadius:
+                                        BorderRadius.circular(24),
+                                    border: Border.all(
+                                      color: Colors.white24,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      const Icon(
+                                        Icons.favorite,
+                                        color: Colors.pinkAccent,
+                                        size: 42,
+                                      ),
+ 
+                                      const SizedBox(height: 12),
+ 
+                                      Text(
+                                        "Every small habit builds a brighter future 🌟",
+                                        textAlign: TextAlign.center,
+                                        style:
+                                            GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontWeight:
+                                              FontWeight.w600,
+                                          fontSize: 17,
+                                          height: 1.5,
+                                        ),
+                                      ),
+ 
+                                      const SizedBox(height: 10),
+ 
+                                      Text(
+                                        "Make learning fun every single day with KidQuest.",
+                                        textAlign:
+                                            TextAlign.center,
+                                        style:
+                                            GoogleFonts.poppins(
+                                          color:
+                                              Colors.white70,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+ 
+                                const SizedBox(height: 30),
+ 
+                                Divider(
+                                  color:
+                                      Colors.white.withOpacity(.20),
+                                ),
+ 
+                                const SizedBox(height: 18),
+ 
+                                Text(
+                                  "Made with ❤️ for Parents & Kids",
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                  ),
+                                ),
+ 
+                                const SizedBox(height: 8),
+ 
+                                Text(
+                                  "KidQuest Premium • Version 2.0",
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white54,
+                                    fontSize: 12,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+ 
+                                const SizedBox(height: 12),
+ 
+                                Text(
+                                  "© 2026 KidQuest",
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white38,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -323,46 +924,66 @@ class _RoleSelectionScreenState
       ),
     );
   }
-}class _FeatureTile extends StatelessWidget {
+    }
+  class _PremiumStatCard extends StatelessWidget {
   final IconData icon;
+  final String value;
   final String title;
-
-  const _FeatureTile({
+  final Color color;
+ 
+  const _PremiumStatCard({
     required this.icon,
+    required this.value,
     required this.title,
+    required this.color,
   });
-
+ 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 175,
       padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 16,
+        vertical: 18,
+        horizontal: 12,
       ),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .10),
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white.withOpacity(.10),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: Colors.white.withValues(alpha: .15),
+          color: Colors.white24,
         ),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Icon(
-            icon,
-            color: Colors.amber,
-            size: 24,
+ 
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: color.withOpacity(.20),
+            child: Icon(
+              icon,
+              color: color,
+              size: 22,
+            ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-              ),
+ 
+          const SizedBox(height: 14),
+ 
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+ 
+          const SizedBox(height: 6),
+ 
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              color: Colors.white70,
+              fontSize: 12,
             ),
           ),
         ],
@@ -370,87 +991,314 @@ class _RoleSelectionScreenState
     );
   }
 }
-
-class _RoleButton extends StatelessWidget {
+ 
+class _PremiumFeatureCard extends StatelessWidget {
   final IconData icon;
   final String title;
-  final bool filled;
-  final VoidCallback onTap;
-  final Gradient? gradient;
-
-  const _RoleButton({
+  final String subtitle;
+ 
+  const _PremiumFeatureCard({
     required this.icon,
     required this.title,
-    required this.filled,
-    required this.onTap,
-    this.gradient,
+    required this.subtitle,
   });
-
+ 
   @override
   Widget build(BuildContext context) {
-    final content = Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          color: Colors.white,
-          size: 28,
-        ),
-        const SizedBox(width: 14),
-        Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-      ],
-    );
-
-    if (filled) {
-      return DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x33000000),
-              blurRadius: 18,
-              offset: Offset(0, 8),
-            ),
-          ],
-        ),
-        child: ElevatedButton(
-          onPressed: onTap,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            foregroundColor: Colors.white,
-            shadowColor: Colors.transparent,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          child: content,
-        ),
-      );
-    }
-
-    return OutlinedButton(
-      onPressed: onTap,
-      style: OutlinedButton.styleFrom(
-        backgroundColor: Colors.white.withValues(alpha: .08),
-        foregroundColor: Colors.white,
-        side: BorderSide(
-          color: Colors.white.withValues(alpha: .55),
-          width: 2,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+    return Container(
+      width: 170,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(.10),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: Colors.white24,
         ),
       ),
-      child: content,
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+ 
+          CircleAvatar(
+            radius: 24,
+            backgroundColor:
+                Colors.white.withOpacity(.15),
+            child: Icon(
+              icon,
+              color: Colors.amber,
+            ),
+          ),
+ 
+          const SizedBox(height: 16),
+ 
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+ 
+          const SizedBox(height: 6),
+ 
+          Text(
+            subtitle,
+            style: GoogleFonts.poppins(
+              color: Colors.white70,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
+class _AchievementCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+ 
+  const _AchievementCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+  });
+ 
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 165,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(.10),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: color.withOpacity(.20),
+            child: Icon(
+              icon,
+              color: color,
+              size: 30,
+            ),
+          ),
+ 
+          const SizedBox(height: 14),
+ 
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+ 
+          const SizedBox(height: 6),
+ 
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              color: Colors.white70,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+ 
+class _PremiumRoleButton extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final LinearGradient gradient;
+  final VoidCallback onTap;
+ 
+  const _PremiumRoleButton({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.gradient,
+    required this.onTap,
+  });
+ 
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: gradient.colors.first.withOpacity(.35),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 22,
+              vertical: 20,
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: Colors.white24,
+                  child: Icon(
+                    icon,
+                    color: Colors.white,
+                  ),
+                ),
+ 
+                const SizedBox(width: 18),
+ 
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    mainAxisAlignment:
+                        MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                        ),
+                      ),
+ 
+                      const SizedBox(height: 4),
+ 
+                      Text(
+                        subtitle,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white70,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+ 
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+class _PremiumOutlineButton extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+ 
+  const _PremiumOutlineButton({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+ 
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(.08),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: Colors.white24,
+              width: 1.5,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 22,
+              vertical: 20,
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: Colors.white.withOpacity(.12),
+                  child: Icon(
+                    icon,
+                    color: Colors.white,
+                  ),
+                ),
+ 
+                const SizedBox(width: 18),
+ 
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+ 
+                      const SizedBox(height: 4),
+ 
+                      Text(
+                        subtitle,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white70,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+ 
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Colors.white70,
+                  size: 18,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+ 
+ 

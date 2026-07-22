@@ -1,180 +1,209 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+
 import 'package:kidquest/models/task.dart';
 import 'package:kidquest/services/achievement_service.dart';
 import 'package:kidquest/utils/routine_templates.dart';
 
 class TaskService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance;
 
   final AchievementService _achievementService =
       AchievementService();
 
-  // ==========================
-// Routine Window (1 AM Reset)
-// ==========================
+  // ==========================================================
+  // ROUTINE WINDOW
+  // (1:00 AM -> Next Day 1:00 AM)
+  // ==========================================================
 
-DateTime _routineStart() {
-  final now = DateTime.now();
+  DateTime _routineStart() {
+    final now = DateTime.now();
 
-  var start = DateTime(
-    now.year,
-    now.month,
-    now.day,
-    1, // 1:00 AM
-  );
+    DateTime start = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      1,
+    );
 
-  // Before 1 AM, still consider yesterday's routine
-  if (now.isBefore(start)) {
-    start = start.subtract(
+    if (now.isBefore(start)) {
+      start = start.subtract(
+        const Duration(days: 1),
+      );
+    }
+
+    return start;
+  }
+
+  DateTime _routineEnd() {
+    final start = _routineStart();
+
+    return start.add(
       const Duration(days: 1),
     );
   }
 
-  return start;
-}
+  // ==========================================================
+  // DELETE EXPIRED TASKS
+  // ==========================================================
 
-DateTime _routineEnd() {
-  return _routineStart().add(
-    const Duration(days: 1),
-  );
-}
-// ==========================
-// Delete Old Tasks
-// ==========================
-Future<void> _deleteOldTasks(String childId) async {
-  final start = _routineStart();
+  Future<void> _deleteOldTasks(
+    String childId,
+  ) async {
+    final start = _routineStart();
 
-  final currentRoutineDate = DateTime(
-    start.year,
-    start.month,
-    start.day,
-  );
-
-  final snapshot = await _firestore
-      .collection("tasks")
-      .where(
-        "childId",
-        isEqualTo: childId,
-      )
-      .where(
-        "dueDate",
-        isLessThan:
-            Timestamp.fromDate(currentRoutineDate),
-      )
-      .get();
-
-  if (snapshot.docs.isEmpty) {
-    return;
-  }
-
-  final batch = _firestore.batch();
-
-  for (final doc in snapshot.docs) {
-    batch.delete(doc.reference);
-  }
-
-  await batch.commit();
-
-  print(
-    "🗑 Deleted ${snapshot.docs.length} old tasks",
-  );
-}
-
-  // ==========================
-  // Generate Today's Tasks
-  // ==========================
-
-  Future<void> generateDailyTasks(String childId) async {
-  try {
-    await _deleteOldTasks(childId);
-    print("========== GENERATING DAILY TASKS ==========");
-    print("Child ID: $childId");
-
-    final today = _routineStart();
-    final tomorrow = _routineEnd();
     final currentRoutineDate = DateTime(
-  today.year,
-  today.month,
-  today.day,
-);
+      start.year,
+      start.month,
+      start.day,
+    );
 
-final nextRoutineDate = currentRoutineDate.add(
-  const Duration(days: 1),
-);
-
-    final existing = await _firestore
-        .collection('tasks')
-        .where("childId", isEqualTo: childId)
+    final snapshot = await _firestore
+        .collection("tasks")
         .where(
-  "dueDate",
-  isGreaterThanOrEqualTo:
-      Timestamp.fromDate(currentRoutineDate),
-)
-.where(
-  "dueDate",
-  isLessThan:
-      Timestamp.fromDate(nextRoutineDate),
-)
+          "childId",
+          isEqualTo: childId,
+        )
+        .where(
+          "dueDate",
+          isLessThan:
+              Timestamp.fromDate(currentRoutineDate),
+        )
         .get();
 
-    print("Existing tasks: ${existing.docs.length}");
-
-    if (existing.docs.isNotEmpty) {
-      print("Tasks already exist");
+    if (snapshot.docs.isEmpty) {
       return;
     }
 
-    final templates = RoutineTemplates.getTasks(childId);
-
-    print("Templates found: ${templates.length}");
-
     final batch = _firestore.batch();
 
-    for (final routine in templates) {
-      print("Adding task: ${routine["title"]}");
-
-      final doc = _firestore.collection("tasks").doc();
-
-      final task = Task(
-        id: doc.id,
-        childId: childId,
-        title: routine["title"],
-        description: routine["description"],
-        icon: routine["icon"],
-        color: routine["color"],
-        xp: routine["xp"],
-        coins: routine["coins"],
-        dueDate: DateTime(
-  today.year,
-  today.month,
-  today.day,
-),
-        submissionTime: routine["submissionTime"],
-        isCompleted: false,
-        completedAt: null,
-        status: TaskStatus.pending,
-      );
-
-      batch.set(doc, task.toMap());
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
     }
-
-    print("Committing batch...");
 
     await batch.commit();
 
-    print("✅ Tasks generated successfully.");
-  } catch (e, stackTrace) {
-    print("❌ ERROR WHILE GENERATING TASKS");
-    print(e);
-    print(stackTrace);
+    debugPrint(
+      "Deleted ${snapshot.docs.length} expired tasks.",
+    );
   }
-}
 
-  // ==========================
-  // Old API Compatibility
-  // ==========================
+  // ==========================================================
+  // GENERATE DAILY TASKS
+  // ==========================================================
 
-  Future<void> addTask(Task task) async {
+  Future<void> generateDailyTasks(
+    String childId,
+  ) async {    try {
+      await _deleteOldTasks(childId);
+
+      debugPrint(
+        "========== GENERATING DAILY TASKS ==========",
+      );
+
+      final today = _routineStart();
+
+      final currentRoutineDate = DateTime(
+        today.year,
+        today.month,
+        today.day,
+      );
+
+      final nextRoutineDate =
+          currentRoutineDate.add(
+        const Duration(days: 1),
+      );
+
+      final existing = await _firestore
+          .collection("tasks")
+          .where(
+            "childId",
+            isEqualTo: childId,
+          )
+          .where(
+            "dueDate",
+            isGreaterThanOrEqualTo:
+                Timestamp.fromDate(
+              currentRoutineDate,
+            ),
+          )
+          .where(
+            "dueDate",
+            isLessThan:
+                Timestamp.fromDate(
+              nextRoutineDate,
+            ),
+          )
+          .get();
+
+      if (existing.docs.isNotEmpty) {
+        debugPrint(
+          "Today's tasks already exist.",
+        );
+        return;
+      }
+
+      final templates =
+          RoutineTemplates.getTasks(
+        childId,
+      );
+
+      final batch = _firestore.batch();
+
+      for (final routine in templates) {
+        final doc =
+            _firestore.collection("tasks").doc();
+
+        final task = Task(
+          id: doc.id,
+          childId: childId,
+          title: routine["title"],
+          description:
+              routine["description"],
+          icon: routine["icon"],
+          color: routine["color"],
+          xp: routine["xp"],
+          coins: routine["coins"],
+          dueDate: currentRoutineDate,
+          submissionTime:
+              routine["submissionTime"],
+          isCompleted: false,
+          completedAt: null,
+          status: TaskStatus.pending,
+        );
+
+        batch.set(
+          doc,
+          task.toMap(),
+        );
+      }
+
+      await batch.commit();
+
+      debugPrint(
+        "Daily tasks generated successfully.",
+      );
+    } catch (e, stackTrace) {
+      debugPrint(
+        "Failed to generate daily tasks.",
+      );
+
+      debugPrint(e.toString());
+
+      debugPrint(
+        stackTrace.toString(),
+      );
+    }
+  }
+
+  // ==========================================================
+  // ADD TASK
+  // ==========================================================
+
+  Future<void> addTask(
+    Task task,
+  ) async {
     final doc =
         _firestore.collection("tasks").doc();
 
@@ -185,63 +214,46 @@ final nextRoutineDate = currentRoutineDate.add(
     );
   }
 
-  // ==========================
-  // Child Tasks
-  // ==========================
+  // ==========================================================
+  // CHILD TASKS
+  // ==========================================================
 
- Stream<List<Task>> getTasksForChild(
-    String childId) {
-  final start = _routineStart();
+  Stream<List<Task>> getTasksForChild(
+    String childId,
+  ) {
+    final start = _routineStart();
 
-  final currentRoutineDate = DateTime(
-    start.year,
-    start.month,
-    start.day,
-  );
+    final currentRoutineDate = DateTime(
+      start.year,
+      start.month,
+      start.day,
+    );
 
-  final nextRoutineDate =
-      currentRoutineDate.add(
-    const Duration(days: 1),
-  );
+    final nextRoutineDate =
+        currentRoutineDate.add(
+      const Duration(days: 1),
+    );
 
-  return _firestore
-      .collection("tasks")
-      .where(
-        "childId",
-        isEqualTo: childId,
-      )
-      .where(
-        "dueDate",
-        isGreaterThanOrEqualTo:
-            Timestamp.fromDate(currentRoutineDate),
-      )
-      .where(
-        "dueDate",
-        isLessThan:
-            Timestamp.fromDate(nextRoutineDate),
-      )
-      .snapshots()
-      .map(
-        (snapshot) => snapshot.docs
-            .map(
-              (doc) => Task.fromMap(
-                doc.id,
-                doc.data(),
-              ),
-            )
-            .toList(),
-      );
-}
-  //}
-
-  // ==========================
-  // Parent View
-  // ==========================
-
-  Stream<List<Task>> getAllTasks() {
     return _firestore
         .collection("tasks")
-        .orderBy("dueDate", descending: true)
+        .where(
+          "childId",
+          isEqualTo: childId,
+        )
+        .where(
+          "dueDate",
+          isGreaterThanOrEqualTo:
+              Timestamp.fromDate(
+            currentRoutineDate,
+          ),
+        )
+        .where(
+          "dueDate",
+          isLessThan:
+              Timestamp.fromDate(
+            nextRoutineDate,
+          ),
+        )
         .snapshots()
         .map(
           (snapshot) => snapshot.docs
@@ -255,13 +267,37 @@ final nextRoutineDate = currentRoutineDate.add(
         );
   }
 
-  // ==========================
-  // Complete Task
-  // ==========================
+  // ==========================================================
+  // ALL TASKS (PARENT)
+  // ==========================================================
+
+  Stream<List<Task>> getAllTasks() {
+    return _firestore
+        .collection("tasks")
+        .orderBy(
+          "dueDate",
+          descending: true,
+        )
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => Task.fromMap(
+                  doc.id,
+                  doc.data(),
+                ),
+              )
+              .toList(),
+        );
+  }
+
+  // ==========================================================
+  // COMPLETE TASK
+  // ==========================================================
 
   Future<bool> completeTask(
-      Task task) async {
-    if (task.isCompleted) {
+    Task task,
+  ) async {    if (task.isCompleted) {
       return false;
     }
 
@@ -272,10 +308,9 @@ final nextRoutineDate = currentRoutineDate.add(
       "isCompleted": true,
     });
 
-    final childRef =
-        _firestore.collection("children").doc(
-              task.childId,
-            );
+    final childRef = _firestore
+        .collection("children")
+        .doc(task.childId);
 
     int latestXP = 0;
 
@@ -301,31 +336,28 @@ final nextRoutineDate = currentRoutineDate.add(
         final latestCoins =
             currentCoins + task.coins;
 
-        final Timestamp? lastTime =
+        final Timestamp? lastCompleted =
             data["lastCompletedDate"];
 
         final today = DateTime.now();
 
         int streak = 1;
 
-        if (lastTime != null) {
+        if (lastCompleted != null) {
           final previous =
-              lastTime.toDate();
+              lastCompleted.toDate();
 
-          final difference =
-              DateTime(
+          final difference = DateTime(
             today.year,
             today.month,
             today.day,
-          )
-                  .difference(
+          ).difference(
             DateTime(
               previous.year,
               previous.month,
               previous.day,
             ),
-          )
-                  .inDays;
+          ).inDays;
 
           if (difference == 0) {
             streak = currentStreak;
@@ -341,13 +373,15 @@ final nextRoutineDate = currentRoutineDate.add(
             "coins": latestCoins,
             "streak": streak,
             "lastCompletedDate":
-                Timestamp.fromDate(today),
+                Timestamp.fromDate(
+              today,
+            ),
           },
         );
       },
     );
 
-    final completed =
+    final completedTasks =
         await _firestore
             .collection("tasks")
             .where(
@@ -365,30 +399,32 @@ final nextRoutineDate = currentRoutineDate.add(
       childId: task.childId,
       xp: latestXP,
       completedTasks:
-          completed.docs.length,
+          completedTasks.docs.length,
     );
 
     return true;
   }
 
-  // ==========================
-  // Update
-  // ==========================
+  // ==========================================================
+  // UPDATE TASK
+  // ==========================================================
 
   Future<void> updateTask(
-      Task task) async {
+    Task task,
+  ) async {
     await _firestore
         .collection("tasks")
         .doc(task.id)
-        .update(task.toMap());
-  }
-
-  // ==========================
-  // Delete
-  // ==========================
+        .update(
+          task.toMap(),
+        );
+  }  // ==========================================================
+  // DELETE TASK
+  // ==========================================================
 
   Future<void> deleteTask(
-      String taskId) async {
+    String taskId,
+  ) async {
     await _firestore
         .collection("tasks")
         .doc(taskId)

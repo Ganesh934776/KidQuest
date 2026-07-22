@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'package:kidquest/models/child.dart';
+
 import 'package:kidquest/screens/common/role_selection_screen.dart';
 import 'package:kidquest/screens/parent/add_child_screen.dart';
 import 'package:kidquest/screens/parent/analytics_screen.dart';
@@ -15,12 +17,12 @@ import 'package:kidquest/services/parent_service.dart';
 import 'package:kidquest/services/session_service.dart';
 import 'package:kidquest/services/task_service.dart';
 
-import 'package:kidquest/widgets/dashboard/parent_hero_section.dart';
-import 'package:kidquest/widgets/dashboard/dashboard_stats_row.dart';
 import 'package:kidquest/widgets/dashboard/child_overview_card.dart';
-import 'package:kidquest/widgets/dashboard/routine_banner.dart';
 import 'package:kidquest/widgets/dashboard/children_section.dart';
+import 'package:kidquest/widgets/dashboard/dashboard_stats_row.dart';
+import 'package:kidquest/widgets/dashboard/parent_hero_section.dart';
 import 'package:kidquest/widgets/dashboard/quick_action_card.dart';
+import 'package:kidquest/widgets/dashboard/routine_banner.dart';
 
 class ParentDashboardScreen extends StatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -32,10 +34,17 @@ class ParentDashboardScreen extends StatefulWidget {
 
 class _ParentDashboardScreenState
     extends State<ParentDashboardScreen> {
-  final DashboardService _dashboardService = DashboardService();
-  final ParentService _parentService = ParentService();
-  final ChildService _childService = ChildService();
-  final TaskService _taskService = TaskService();
+  final DashboardService _dashboardService =
+      DashboardService();
+
+  final ParentService _parentService =
+      ParentService();
+
+  final ChildService _childService =
+      ChildService();
+
+  final TaskService _taskService =
+      TaskService();
 
   Future<Map<String, dynamic>>? dashboardFuture;
 
@@ -46,17 +55,34 @@ class _ParentDashboardScreenState
   }
 
   Future<Map<String, dynamic>> _loadDashboard() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final uid =
+        FirebaseAuth.instance.currentUser!.uid;
 
-    final parent = await _parentService.getParent(uid);
-    final children = await _dashboardService.getChildrenCount(uid);
-    final totalXp = await _dashboardService.getTotalXP(uid);
-    final totalTasks = await _dashboardService.getTaskCount();
-    final rewards = await _dashboardService.getRewardCount();
+    final parent =
+        await _parentService.getParent(uid);
+
+    /// Fetch complete child list instead of only count
+    final List<Child> children =
+        await _childService.getChildren(uid).first;
+
+    final totalXp =
+        await _dashboardService.getTotalXP(uid);
+
+    final totalTasks =
+        await _dashboardService.getTaskCount();
+
+    final rewards =
+        await _dashboardService.getRewardCount();
 
     return {
       'name': parent?['name'] ?? 'Parent',
+
+      /// Actual children list
       'children': children,
+
+      /// Count used by Hero & Stats cards
+      'childrenCount': children.length,
+
       'xp': totalXp,
       'tasks': totalTasks,
       'rewards': rewards,
@@ -72,7 +98,8 @@ class _ParentDashboardScreenState
   }
 
   Future<void> generateRoutine() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final uid =
+        FirebaseAuth.instance.currentUser!.uid;
 
     showDialog(
       context: context,
@@ -87,7 +114,9 @@ class _ParentDashboardScreenState
           await _childService.getChildren(uid).first;
 
       for (final child in children) {
-        await _taskService.generateDailyTasks(child.id);
+        await _taskService.generateDailyTasks(
+          child.id,
+        );
       }
 
       if (!mounted) return;
@@ -96,11 +125,11 @@ class _ParentDashboardScreenState
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-  backgroundColor: Colors.green,
-  content: Text(
-    "Today's routine generated successfully 🎉",
-  ),
-),
+          backgroundColor: Colors.green,
+          content: Text(
+            "Today's routine generated successfully 🎉",
+          ),
+        ),
       );
 
       refreshDashboard();
@@ -110,13 +139,18 @@ class _ParentDashboardScreenState
       Navigator.pop(context);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        SnackBar(
+          content: Text(
+            e.toString(),
+          ),
+        ),
       );
     }
   }
 
   Future<void> _logout() async {
     await FirebaseAuth.instance.signOut();
+
     await SessionService().clearSession();
 
     if (!mounted) return;
@@ -124,7 +158,8 @@ class _ParentDashboardScreenState
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (_) => const RoleSelectionScreen(),
+        builder: (_) =>
+            const RoleSelectionScreen(),
       ),
       (_) => false,
     );
@@ -138,7 +173,6 @@ class _ParentDashboardScreenState
         scrolledUnderElevation: 0,
         backgroundColor: Colors.transparent,
         centerTitle: false,
-
         title: const Text(
           "Parent Dashboard",
           style: TextStyle(
@@ -147,7 +181,6 @@ class _ParentDashboardScreenState
             color: Colors.black87,
           ),
         ),
-
         actions: [
           IconButton(
             tooltip: "Analytics",
@@ -197,7 +230,6 @@ class _ParentDashboardScreenState
       body: FutureBuilder<Map<String, dynamic>>(
         future: dashboardFuture,
         builder: (context, snapshot) {
-
           if (snapshot.connectionState ==
               ConnectionState.waiting) {
             return const Center(
@@ -219,30 +251,33 @@ class _ParentDashboardScreenState
 
           final data = snapshot.data!;
 
+          final children =
+              data["children"] as List<Child>;
+
           return RefreshIndicator(
             onRefresh: refreshDashboard,
-
             child: ListView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
+              physics:
+                  const BouncingScrollPhysics(),
+              padding:
+                  const EdgeInsets.fromLTRB(
                 20,
                 10,
                 20,
                 120,
               ),
-
               children: [
-
                 ParentHeroSection(
                   parentName: data["name"],
-                  children: data["children"],
+                  children: data["childrenCount"],
                   xp: data["xp"],
                 ),
 
                 const SizedBox(height: 24),
 
                 DashboardStatsRow(
-                  children: data["children"],
+                  children:
+                      data["childrenCount"],
                   tasks: data["tasks"],
                   xp: data["xp"],
                 ),
@@ -263,35 +298,46 @@ class _ParentDashboardScreenState
 
                 const SizedBox(height: 28),
 
+                /// Real children from Firestore
                 ChildrenSection(
-                  children: data["children"],
+                  children: children,
                 ),
 
-                const SizedBox(height: 30),                Container(
-                  padding: const EdgeInsets.all(22),
+                const SizedBox(height: 30),
+
+                Container(
+                  padding:
+                      const EdgeInsets.all(22),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius:
+                        BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: .05),
+                        color: Colors.black
+                            .withValues(alpha: .05),
                         blurRadius: 18,
-                        offset: const Offset(0, 8),
+                        offset:
+                            const Offset(0, 8),
                       ),
                     ],
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
                     children: [
                       const Text(
                         "Today's Summary",
                         style: TextStyle(
                           fontSize: 22,
-                          fontWeight: FontWeight.bold,
+                          fontWeight:
+                              FontWeight.bold,
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(
+                        height: 20,
+                      ),
 
                       Row(
                         children: [
@@ -304,7 +350,9 @@ class _ParentDashboardScreenState
                             ),
                           ),
 
-                          const SizedBox(width: 12),
+                          const SizedBox(
+                            width: 12,
+                          ),
 
                           Expanded(
                             child: _summaryTile(
@@ -315,7 +363,9 @@ class _ParentDashboardScreenState
                             ),
                           ),
 
-                          const SizedBox(width: 12),
+                          const SizedBox(
+                            width: 12,
+                          ),
 
                           Expanded(
                             child: _summaryTile(
@@ -331,9 +381,7 @@ class _ParentDashboardScreenState
                   ),
                 ),
 
-                const SizedBox(height: 34),
-
-                Row(
+                const SizedBox(height: 34),                Row(
                   children: [
                     const Text(
                       "Quick Actions",
@@ -388,7 +436,8 @@ class _ParentDashboardScreenState
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const AddChildScreen(),
+                              builder: (_) =>
+                                  const AddChildScreen(),
                             ),
                           );
 
@@ -419,7 +468,8 @@ class _ParentDashboardScreenState
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => ViewTasksScreen(),
+                              builder: (_) =>
+                                  ViewTasksScreen(),
                             ),
                           );
                         },
@@ -446,7 +496,8 @@ class _ParentDashboardScreenState
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => ViewRewardsScreen(),
+                              builder: (_) =>
+                                  ViewRewardsScreen(),
                             ),
                           );
                         },
@@ -478,15 +529,14 @@ class _ParentDashboardScreenState
                   },
                 ),
 
-                const SizedBox(height: 50),              ],
+                const SizedBox(height: 50),
+              ],
             ),
           );
         },
       ),
     );
-  }
-
-  Widget _summaryTile(
+  }  Widget _summaryTile(
     IconData icon,
     String title,
     String value,

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'package:kidquest/models/child.dart';
+import 'package:kidquest/screens/child/child_dashboard_screen.dart';
+
 class ChildrenSection extends StatelessWidget {
-  final int children;
+  final List<Child> children;
 
   const ChildrenSection({
     super.key,
@@ -16,16 +19,17 @@ class ChildrenSection extends StatelessWidget {
         const Text(
           "My Children",
           style: TextStyle(
-            fontSize: 22,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
+            color: Colors.black87,
           ),
         ),
 
         const SizedBox(height: 18),
 
-        if (children == 0)
+        if (children.isEmpty)
           Container(
-            height: 170,
+            height: 190,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(28),
@@ -49,27 +53,40 @@ class ChildrenSection extends StatelessWidget {
           )
         else
           SizedBox(
-            height: 240,
+            height: 270,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: children,
-              itemBuilder: (_, index) {
+              physics: const BouncingScrollPhysics(),
+              itemCount: children.length,
+              itemBuilder: (context, index) {
+                final child = children[index];
+
+                final level = (child.xp ~/ 100) + 1;
+
+                final materialColor =
+                    Colors.primaries[index % Colors.primaries.length];
+
                 return Container(
-                  width: 170,
+                  width: 180,
                   margin: const EdgeInsets.only(right: 18),
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(28),
                     gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                       colors: [
-                        Colors.primaries[
-                                index % Colors.primaries.length]
-                            .shade300,
-                        Colors.primaries[
-                                index % Colors.primaries.length]
-                            .shade500,
+                        materialColor.shade300,
+                        materialColor.shade600,
                       ],
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: materialColor.withValues(alpha: .25),
+                        blurRadius: 18,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
                   ),
                   child: Column(
                     children: [
@@ -79,13 +96,16 @@ class ChildrenSection extends StatelessWidget {
                         child: Icon(
                           Icons.face,
                           size: 34,
+                          color: Colors.indigo,
                         ),
                       ),
 
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
 
                       Text(
-                        "Child ${index + 1}",
+                        child.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Colors.white,
@@ -96,32 +116,64 @@ class ChildrenSection extends StatelessWidget {
 
                       const SizedBox(height: 6),
 
-                      const Text(
-                        "Level 1",
-                        style: TextStyle(
+                      Text(
+                        "Level $level",
+                        style: const TextStyle(
                           color: Colors.white70,
+                          fontSize: 16,
                         ),
                       ),
 
-                      const Spacer(),
+                      const SizedBox(height: 10),
+
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          "${child.xp} XP",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),                      const SizedBox(height: 14),
+
+                      Expanded(
+                        child: Container(),
+                      ),
 
                       SizedBox(
                         width: double.infinity,
-                        height: 42,
+                        height: 46,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ChildDashboardScreen(
+                                  childId: child.id,
+                                ),
+                              ),
+                            );
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: Colors.black87,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                           ),
                           child: const Text(
                             "View",
                             style: TextStyle(
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
